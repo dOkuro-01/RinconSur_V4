@@ -8,6 +8,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -43,6 +48,24 @@ fun Panel(titulo: String? = null, content: @Composable ColumnScope.() -> Unit) {
 
 @Composable
 fun Etiqueta(texto: String) { Text(texto, fontSize = 13.sp, color = GrisSecundario) }
+
+@Composable
+fun CampoFormulario(valor: String, alCambiar: (String) -> Unit, etiqueta: String,
+                    icono: ImageVector, error: String? = null, ayuda: String = "",
+                    habilitado: Boolean = true,
+                    teclado: KeyboardOptions = KeyboardOptions.Default,
+                    transformacion: VisualTransformation = VisualTransformation.None) {
+    OutlinedTextField(
+        value = valor, onValueChange = alCambiar, label = { Text(etiqueta) },
+        leadingIcon = { Icon(icono, contentDescription = null) },
+        trailingIcon = {
+            if (error != null) Icon(Icons.Filled.Error, contentDescription = "Campo con error")
+        },
+        isError = error != null, supportingText = { Text(error ?: ayuda) },
+        enabled = habilitado, singleLine = true, keyboardOptions = teclado,
+        visualTransformation = transformacion, modifier = Modifier.fillMaxWidth()
+    )
+}
 
 @Composable
 fun Boton(texto: String, accion: () -> Unit, secundario: Boolean = false, peligro: Boolean = false, habilitado: Boolean = true) {

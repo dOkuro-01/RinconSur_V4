@@ -5,6 +5,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -52,12 +53,11 @@ fun RegistrosQrScreen(vm: RegistrosQrViewModel, puedeGestionar: Boolean = false,
                     }, secundario = true)
                     AnimatedVisibility(visible = formulario.editando == registro.id) {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedTextField(value = formulario.seccion,
-                                onValueChange = vm::onSeccionChange,
-                                label = { Text("Nueva sección") },
-                                isError = formulario.seccionError != null,
-                                supportingText = { Text(formulario.seccionError ?: "Entre 2 y 60 caracteres.") },
-                                modifier = Modifier.fillMaxWidth(), singleLine = true)
+                            CampoFormulario(
+                                valor = formulario.seccion, alCambiar = vm::onSeccionChange,
+                                etiqueta = "Nueva sección", icono = Icons.Filled.Edit,
+                                error = formulario.seccionError, ayuda = "Entre 2 y 60 caracteres"
+                            )
                             Boton("Guardar cambios", vm::guardarSeccion)
                             Boton("Cancelar edición", vm::cancelarEdicion, secundario = true)
                         }

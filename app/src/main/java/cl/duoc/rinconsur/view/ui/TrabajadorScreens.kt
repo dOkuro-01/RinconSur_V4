@@ -7,6 +7,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -213,11 +215,12 @@ fun TrabajadorPerfilScreen(vm: ProbadoresViewModel, formularios: FormulariosView
         Panel("Control de fila virtual") {
             Text("Estado: ${if (config.abierta) "Abierta" else "Cerrada"}")
             Etiqueta("No se aceptarán clientes si su espera + 12 minutos supera el horario de cierre.")
-            OutlinedTextField(value = formulario.minutos, onValueChange = formularios::onMinutosChange,
-                isError = formulario.minutosError != null,
-                supportingText = { formulario.minutosError?.let { Text(it) } },
-                label = { Text("Minutos para el cierre") }, modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+            CampoFormulario(
+                valor = formulario.minutos, alCambiar = formularios::onMinutosChange,
+                etiqueta = "Minutos para el cierre", icono = Icons.Filled.Timer,
+                error = formulario.minutosError, ayuda = "Entre 1 y 600 minutos",
+                teclado = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
             Boton("Programar límite de ingreso", { formularios.validarMinutos()?.let(vm::programarCierre) })
             Boton("Cerrar fila ahora", vm::cerrarFila, peligro = true)
             Boton("Reabrir fila", vm::abrirFila, secundario = true)

@@ -71,23 +71,16 @@ fun ClienteInicioScreen(vm: ProbadoresViewModel, formularios: FormulariosViewMod
         Text("Inicio del cliente", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Panel("1. Ingresa tu RUT") {
             Text("Escribe un RUT de demostración para pedir tu turno.")
-            OutlinedTextField(
-                value = formulario.rut,
-                onValueChange = formularios::onRutChange,
-                label = { Text("RUT del cliente") },
-                leadingIcon = { Icon(Icons.Filled.Badge, contentDescription = null) },
-                placeholder = { Text("12345678-5") },
-                supportingText = {
-                    Text(formulario.rutError ?: "Ejemplo para practicar: 12345678-5")
+            CampoFormulario(
+                valor = formulario.rut,
+                alCambiar = {
+                    formularios.onRutChange(it)
+                    vm.limpiarHistorialCliente()
                 },
-                isError = formulario.rutError != null,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Characters,
-                    keyboardType = KeyboardType.Ascii,
-                    imeAction = ImeAction.Done
-                ),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                etiqueta = "RUT del cliente", icono = Icons.Filled.Badge,
+                error = formulario.rutError, ayuda = "Ejemplo: 12345678-5",
+                teclado = KeyboardOptions(capitalization = KeyboardCapitalization.Characters,
+                    keyboardType = KeyboardType.Ascii, imeAction = ImeAction.Done)
             )
             Etiqueta("Solo para pruebas: no ingreses tu RUT verdadero.")
         }
@@ -240,17 +233,15 @@ fun ClienteHistorialScreen(vm: ProbadoresViewModel, formularios: FormulariosView
         Text("Historial", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Panel("Mis turnos") {
             Text("Consulta tus visitas con el RUT ficticio que usaste al pedir turno.")
-            OutlinedTextField(
-                value = formulario.rut,
-                onValueChange = {
+            CampoFormulario(
+                valor = formulario.rut,
+                alCambiar = {
                     formularios.onRutChange(it)
                     vm.limpiarHistorialCliente()
                 },
-                label = { Text("RUT del cliente") },
-                leadingIcon = { Icon(Icons.Filled.Badge, contentDescription = null) },
-                isError = formulario.rutError != null,
-                supportingText = { formulario.rutError?.let { Text(it) } },
-                singleLine = true, modifier = Modifier.fillMaxWidth()
+                etiqueta = "RUT del cliente", icono = Icons.Filled.Badge,
+                error = formulario.rutError, ayuda = "Ejemplo: 12345678-5",
+                teclado = KeyboardOptions(keyboardType = KeyboardType.Ascii, imeAction = ImeAction.Done)
             )
             Boton("Consultar mis turnos", { formularios.validarRut()?.let(vm::consultarHistorial) })
         }

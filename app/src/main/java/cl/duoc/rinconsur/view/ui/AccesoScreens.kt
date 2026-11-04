@@ -45,20 +45,17 @@ fun LoginTrabajadorScreen(vm: LoginViewModel, alIngresar: () -> Unit) {
             tint = AzulRincon, modifier = Modifier.size(64.dp).pulsoYRotacion())
         AnimacionEntradaFormulario(visible) {
             Panel("Acceso para personal de tienda") {
-                OutlinedTextField(value = estado.usuario, onValueChange = vm::onUsuarioChange,
-                    enabled = !estado.isLoading,
-                    label = { Text("Usuario") }, singleLine = true,
-                    leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null) },
-                    isError = estado.usuarioError != null,
-                    supportingText = { estado.usuarioError?.let { Text(it) } },
-                    modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = estado.password, onValueChange = vm::onPasswordChange,
-                    enabled = !estado.isLoading,
-                    label = { Text("Contraseña") }, singleLine = true,
-                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
-                    isError = estado.passwordError != null,
-                    supportingText = { estado.passwordError?.let { Text(it) } },
-                    visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+                CampoFormulario(
+                    valor = estado.usuario, alCambiar = vm::onUsuarioChange,
+                    etiqueta = "Usuario", icono = Icons.Filled.Person,
+                    error = estado.usuarioError, habilitado = !estado.isLoading
+                )
+                CampoFormulario(
+                    valor = estado.password, alCambiar = vm::onPasswordChange,
+                    etiqueta = "Contraseña", icono = Icons.Filled.Lock,
+                    error = estado.passwordError, habilitado = !estado.isLoading,
+                    transformacion = PasswordVisualTransformation()
+                )
                 estado.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 Boton(if (estado.isLoading) "Ingresando…" else "Ingresar", vm::login,
                     habilitado = !estado.isLoading)
