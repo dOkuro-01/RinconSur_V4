@@ -162,9 +162,13 @@ fun AppNavigation(vm: ProbadoresViewModel, login: LoginViewModel,
                         }
                     }, volver = { nav.popBackStack() })
                 }
-                composable(Rutas.REGISTROS_QR) { RegistrosQrScreen(registrosQr, puedeGestionar = acceso.autenticado) {
-                    cambiar(if (acceso.autenticado) Rutas.TRABAJADOR_PERFIL else Rutas.CLIENTE_INICIO)
-                } }
+                composable(Rutas.REGISTROS_QR) {
+                    if (acceso.autenticado) {
+                        RegistrosQrScreen(registrosQr, puedeGestionar = true) { cambiar(Rutas.TRABAJADOR_PERFIL) }
+                    } else {
+                        ClienteHistorialScreen(vm, formularios, estado) { cambiar(Rutas.CLIENTE_INICIO) }
+                    }
+                }
                 composable(Rutas.CLIENTE_TURNO) { ClienteTurnoScreen(vm, estado) { cambiar(Rutas.CLIENTE_INICIO) } }
                 composable(Rutas.CLIENTE_PERFIL) { ClientePerfilScreen(vm, ::regresarRoles) }
                 composable(Rutas.TRABAJADOR_INICIO) {

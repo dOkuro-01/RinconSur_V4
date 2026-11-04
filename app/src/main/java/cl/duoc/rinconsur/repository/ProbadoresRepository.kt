@@ -26,7 +26,7 @@ class ProbadoresRepository(private val dao: ProbadoresDao) {
         }
     }
 
-    private fun hashRut(rut: String): String {
+    fun hashRut(rut: String): String {
         val normalizado = rut.uppercase().replace(".", "").replace("-", "").replace(" ", "")
         return MessageDigest.getInstance("SHA-256").digest(normalizado.toByteArray())
             .joinToString("") { "%02x".format(it) }

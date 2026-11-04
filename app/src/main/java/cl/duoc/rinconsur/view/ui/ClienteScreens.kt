@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cl.duoc.rinconsur.viewmodels.logic.CalculadoraFila
+import cl.duoc.rinconsur.viewmodels.logic.HistorialCliente
 import cl.duoc.rinconsur.repository.models.*
 import cl.duoc.rinconsur.view.utils.*
 import cl.duoc.rinconsur.view.theme.*
@@ -227,5 +228,43 @@ fun ClientePerfilScreen(vm: ProbadoresViewModel, volverRoles: () -> Unit) {
             Etiqueta("Kotlin · Jetpack Compose · Room/SQLite · MVVM · QR con cámara")
             Boton("Cambiar de rol", volverRoles, secundario = true)
         }
+    }
+}
+
+@Composable
+fun ClienteHistorialScreen(vm: ProbadoresViewModel, formularios: FormulariosViewModel,
+                           estado: EstadoGeneral, volver: () -> Unit) {
+    val formulario by formularios.uiState.collectAsState()
+    val historial = HistorialCliente.consultar(estado.turnos, vm.clienteHash)
+    Contenido {
+        Text("Historial", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Panel("Mis turnos") {
+            Text("Consulta tus visitas con el RUT ficticio que usaste al pedir turno.")
+            OutlinedTextField(
+                value = formulario.rut,
+                onValueChange = {
+                    formularios.onRutChange(it)
+                    vm.limpiarHistorialCliente()
+                },
+                label = { Text("RUT del cliente") },
+                leadingIcon = { Icon(Icons.Filled.Badge, contentDescription = null) },
+                isError = formulario.rutError != null,
+                supportingText = { formulario.rutError?.let { Text(it) } },
+                singleLine = true, modifier = Modifier.fillMaxWidth()
+            )
+            Boton("Consultar mis turnos", { formularios.validarRut()?.let(vm::consultarHistorial) })
+        }
+        if (vm.clienteHash != null && historial.isEmpty()) Etiqueta("No hay turnos registrados para este RUT.")
+        historial.forEach { turno ->
+            Panel("Turno #${turno.id}") {
+                Text("Sucursal: ${turno.sucursal}")
+                Text("Estado: ${turno.estado}")
+                Text("Solicitado: ${fechaHora(turno.solicita)}")
+                turno.cabina?.let { Text("Probador: $it") }
+                turno.ingreso?.let { Text("Ingreso: ${fechaHora(it)}") }
+                turno.salida?.let { Text("Salida: ${fechaHora(it)}") }
+            }
+        }
+        Boton("Volver al inicio", volver, secundario = true)
     }
 }

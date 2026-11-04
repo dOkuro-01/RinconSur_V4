@@ -40,8 +40,18 @@ class ProbadoresViewModel(application: Application) : AndroidViewModel(applicati
         private set
     var sucursal by mutableStateOf(prefs.getString("sucursal", "Plaza Norte") ?: "Plaza Norte")
         private set
-    var ticketId by mutableStateOf(prefs.getLong("ticket", -1L).takeIf { it > 0L })
+    var ticketId by mutableStateOf<Long?>(null)
         private set
+    var clienteHash by mutableStateOf<String?>(null)
+        private set
+    fun limpiarHistorialCliente() { clienteHash = null }
+    fun consultarHistorial(rut: String) {
+        if (!Validaciones.rutDemo(rut)) return
+        clienteHash = repo.hashRut(rut)
+        ticketId = estado.value.turnos.firstOrNull {
+            it.rutHash == clienteHash && it.estado in listOf("ACTIVO", "ESPERA")
+        }?.id
+    }
     var mensaje by mutableStateOf("")
         private set
     var cabinaDetalle by mutableStateOf<Int?>(null)
@@ -88,6 +98,7 @@ class ProbadoresViewModel(application: Application) : AndroidViewModel(applicati
                 if (!qrValidado) { mensaje = "Primero escanea el QR de la sucursal."; return@launch }
                 val (id, respuesta) = repo.inscribir(rut, sucursal)
                 if (id != null) {
+                    clienteHash = repo.hashRut(rut)
                     ticketId = id
                     prefs.edit().putLong("ticket", id).apply()
                     turnoSolicitado = id
@@ -129,6 +140,7 @@ class ProbadoresViewModel(application: Application) : AndroidViewModel(applicati
     fun prepararDemoFila() = ejecutar { repo.prepararDemoFila(sucursal) }
     fun reiniciar() = ejecutar {
         ticketId = null
+        clienteHash = null
         qrValidado = false
         prefs.edit().remove("ticket").apply()
         cabinaDetalle = null
@@ -137,6 +149,9 @@ class ProbadoresViewModel(application: Application) : AndroidViewModel(applicati
     fun informar(texto: String) { mensaje = texto }
     fun borrarMensaje() { mensaje = "" }
     fun salir() {
+        clienteHash = null
+        ticketId = null
+        prefs.edit().remove("ticket").apply()
         mensaje = ""; cabinaDetalle = null
         qrValidado = false
         turnoSolicitado = null
