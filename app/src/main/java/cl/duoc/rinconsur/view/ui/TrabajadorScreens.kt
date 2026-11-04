@@ -52,7 +52,7 @@ fun TrabajadorInicioScreen(vm: ProbadoresViewModel, estado: EstadoGeneral,
                     { vm.gestionar(alerta.cabina, "LIBRE") }, secundario = true)
                 HorizontalDivider()
             }
-            Boton("Ver todas las notificaciones (${alertas.size})", verAlertas, secundario = true)
+            Boton("Ver todos los avisos (${alertas.size})", verAlertas, secundario = true)
         }
         Panel("Fila virtual") {
             Text("En espera: ${estado.turnosEn(vm.sucursal).count { it.estado == "ESPERA" }}")
@@ -157,7 +157,7 @@ fun TrabajadorReportesScreen(vm: ProbadoresViewModel, estado: EstadoGeneral) {
             Contador("Tiempo medio", "$duracion min", AzulRincon, Modifier.weight(1f))
         }
         Panel("Horas peak · atenciones por hora") {
-            Etiqueta("Gráfico con registros de esta base de datos local.")
+            Etiqueta("Atenciones registradas hoy en esta sucursal.")
             Row(Modifier.fillMaxWidth().height(190.dp).horizontalScroll(rememberScrollState()),
                 verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 cantidades.forEach { (hora, total) ->
@@ -172,7 +172,7 @@ fun TrabajadorReportesScreen(vm: ProbadoresViewModel, estado: EstadoGeneral) {
             val peak = cantidades.maxByOrNull { it.value }
             Etiqueta(if (peak == null || peak.value == 0) "No hay datos para calcular una hora peak." else "Hora peak: ${peak.key}:00 · ${peak.value} atenciones")
         }
-        Etiqueta("No se registran compras ni prendas, porque no son parte de este MVP.")
+        Etiqueta("El reporte resume el uso de los probadores.")
     }
 }
 
@@ -180,10 +180,10 @@ fun TrabajadorReportesScreen(vm: ProbadoresViewModel, estado: EstadoGeneral) {
 fun TrabajadorAlertasScreen(vm: ProbadoresViewModel, estado: EstadoGeneral) {
     val alertas = estado.alertas.filter { it.sucursal == vm.sucursal }
     Contenido {
-        Text("Notificaciones", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text("Avisos", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         SelectorSucursal(vm.sucursal, vm::cambiarSucursal)
         Panel("Avisos de esta sucursal") {
-            if (alertas.isEmpty()) Etiqueta("No hay notificaciones aún.")
+            if (alertas.isEmpty()) Etiqueta("No hay avisos registrados.")
             alertas.forEach { a ->
                 Text("${if (a.resuelta) "✓" else "⚠"} ${a.tipo}", fontWeight = FontWeight.Bold,
                     color = if (a.resuelta) VerdeLibre else NaranjaRevision)
@@ -233,7 +233,7 @@ fun TrabajadorPerfilScreen(vm: ProbadoresViewModel, formularios: FormulariosView
         Panel("Demostración") {
             Boton("Demo: ocupar probadores libres", vm::prepararDemoFila, secundario = true)
             Boton("Restaurar datos ficticios", vm::reiniciar, secundario = true)
-            Etiqueta("Los datos se guardan localmente en Room/SQLite. No sincroniza dispositivos.")
+            Etiqueta("Los registros se conservan en este teléfono.")
             Boton("Cerrar sesión / cambiar de rol", salir, secundario = true)
         }
     }

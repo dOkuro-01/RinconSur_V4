@@ -85,8 +85,8 @@ fun ClienteInicioScreen(vm: ProbadoresViewModel, formularios: FormulariosViewMod
             Etiqueta("Solo para pruebas: no ingreses tu RUT verdadero.")
         }
         Panel("2. Identifica la sucursal") {
-            Text("Escanea un QR real de la tienda con CameraX. La sucursal se identifica automáticamente.")
-            Boton("Escanear QR con CameraX", abrirCamara, habilitado = !qrState.guardando)
+            Text("Escanea el código de la tienda para identificar la sucursal.")
+            Boton("Escanear código QR", abrirCamara, habilitado = !qrState.guardando)
             SelectorSucursal(vm.sucursal, {
                 vm.cambiarSucursal(it)
                 qrVm.limpiar()
@@ -115,9 +115,9 @@ fun ClienteInicioScreen(vm: ProbadoresViewModel, formularios: FormulariosViewMod
                             contexto.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                                 Uri.parse("package:${contexto.packageName}")))
                         }) { Text("Abrir ajustes de permisos") }
-                        Boton(if (qrState.guardado) "QR guardado" else "Guardar escaneo en SQLite",
+                        Boton(if (qrState.guardado) "Registro guardado" else "Guardar registro",
                             qrVm::guardar,
-                            habilitado = !qrState.guardado && !qrState.guardando)
+                            habilitado = !qrState.guardado && !qrState.guardando && !qrState.obteniendoUbicacion)
                     }
                 }
             }
@@ -147,7 +147,7 @@ fun ClienteInicioScreen(vm: ProbadoresViewModel, formularios: FormulariosViewMod
             }
             if (!configuracion.abierta) Text("Fila cerrada por el trabajador.", color = RojoOcupado)
             if (configuracion.cierre != null) Etiqueta("Horario límite: ${hora(configuracion.cierre)}")
-            Etiqueta("SQLite guarda solo la huella digital (hash) del RUT ficticio.")
+            Etiqueta("Tu RUT no se guarda como texto.")
         }
     }
 }
@@ -214,11 +214,11 @@ fun ClientePerfilScreen(vm: ProbadoresViewModel, volverRoles: () -> Unit) {
             Text("Rol: Cliente")
             Text("Sucursal: ${vm.sucursal}")
             Text("Turno: ${vm.ticketId?.let { "#$it" } ?: "Sin turno"}")
-            Etiqueta("Esta versión no registra nombre, correo ni RUT en texto plano.")
+            Etiqueta("Solo se muestran los datos de tu sesión.")
         }
         Panel("Acerca de la aplicación") {
             Text("Rincón Sur · MVP académico DSY1105")
-            Etiqueta("Kotlin · Jetpack Compose · Room/SQLite · MVVM · QR con cámara")
+            Etiqueta("Consulta tus turnos y la disponibilidad de probadores.")
             Boton("Cambiar de rol", volverRoles, secundario = true)
         }
     }

@@ -30,7 +30,7 @@ fun RegistrosQrScreen(vm: RegistrosQrViewModel, puedeGestionar: Boolean = false,
             onValueChange = vm::buscar,
             label = { Text("Buscar centro, tienda o sección") },
             leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-            supportingText = { Text("La búsqueda consulta SQLite mediante el DAO.") },
+            supportingText = { Text("Busca por nombre de centro comercial, tienda o sección.") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -63,7 +63,7 @@ fun RegistrosQrScreen(vm: RegistrosQrViewModel, puedeGestionar: Boolean = false,
                         }
                     }
                     if (confirmarEliminar == registro.id) {
-                        Text("¿Eliminar definitivamente este registro de SQLite?")
+                        Text("¿Eliminar definitivamente este registro?")
                         Boton("Sí, eliminar registro", {
                             vm.eliminar(registro.id)
                             confirmarEliminar = null

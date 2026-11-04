@@ -26,7 +26,7 @@ También incorpora el uso de ubicación aproximada como segundo recurso nativo.
 - SQLite mediante Room
 - CameraX
 - ZXing Core
-- LocationManager
+- LocationServices
 - Gradle
 - Git y GitHub
 
@@ -94,7 +94,7 @@ Los resultados regresan mediante las capas correspondientes hasta actualizar la 
 4. Obtener la información de la sucursal y sección contenida en el QR.
 5. Solicitar opcionalmente la ubicación aproximada.
 6. Guardar el escaneo en SQLite.
-7. Consultar el historial de códigos QR.
+7. Consultar sus turnos mediante el RUT ficticio, sin opciones de edición o eliminación.
 8. Solicitar un turno de atención.
 9. Recibir la asignación automática de un probador.
 10. Consultar la posición en la fila, tiempo de espera y alertas.
@@ -146,7 +146,7 @@ El lector funciona localmente, sin necesidad de enviar imágenes a Internet.
 
 ### 2. Ubicación aproximada
 
-La aplicación utiliza LocationManager y LocationManagerCompat para obtener opcionalmente la ubicación aproximada del dispositivo.
+La aplicación utiliza LocationServices para obtener opcionalmente la ubicación aproximada del dispositivo. Requiere Google Play Services y permite continuar sin coordenadas si no hay permiso, el servicio está desactivado o no responde.
 
 Archivo principal:
 
@@ -201,6 +201,7 @@ La aplicación valida el formato y los centros comerciales admitidos antes de pr
 - JDK 17.
 - Android SDK 35.
 - Dispositivo Android con API 26 o superior.
+- Google Play Services para la ubicación; el lector de cámara no lo requiere.
 - Cable USB para ejecutar en un teléfono físico, si corresponde.
 - Conexión a Internet para descargar y sincronizar dependencias.
 
@@ -259,10 +260,10 @@ Para comprobar la funcionalidad:
 5. Escanear uno de los códigos QR de prueba.
 6. Comprobar que aparezca la información contenida en el código.
 7. Guardar el registro en SQLite.
-8. Consultar el historial de escaneos.
+8. Ingresar como trabajador y consultar el historial de escaneos.
 9. Cerrar y volver a abrir la aplicación.
 10. Comprobar que el registro continúa almacenado.
-11. Probar las operaciones de modificación y eliminación.
+11. Como trabajador, probar las operaciones de modificación y eliminación. El historial del cliente muestra únicamente sus turnos.
 
 La guía de pruebas funcionales se encuentra en:
 
@@ -270,11 +271,7 @@ La guía de pruebas funcionales se encuentra en:
 
 ## Estado de verificación
 
-El código fuente del proyecto V4 fue revisado estáticamente y se validaron los archivos QR de prueba.
-
-La ejecución de Gradle, las pruebas automatizadas y la instalación de la APK V4 en un dispositivo físico deben comprobarse antes de la entrega final.
-
-No se declara una compilación o prueba funcional exitosa sin haberla ejecutado.
+La versión 4.1 cuenta con 21 pruebas unitarias aprobadas. La cámara y la ubicación deben comprobarse en un dispositivo físico antes de la entrega final. No se ha realizado esa comprobación en esta revisión.
 
 ## Backend opcional
 

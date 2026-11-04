@@ -10,6 +10,7 @@ import cl.duoc.rinconsur.repository.models.DatosQr
 import cl.duoc.rinconsur.repository.models.Coordenadas
 import cl.duoc.rinconsur.viewmodels.logic.ProcesadorQr
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -31,6 +32,7 @@ data class RegistrosQrUiState(
  
 @OptIn(ExperimentalCoroutinesApi::class)
 class RegistrosQrViewModel(application: Application) : AndroidViewModel(application) {
+    private var ubicacionJob: Job? = null
     private var puedeGestionar = false
     fun permitirGestion(permitir: Boolean) {
         puedeGestionar = permitir
@@ -46,10 +48,11 @@ class RegistrosQrViewModel(application: Application) : AndroidViewModel(applicat
 
     fun leer(texto: String): Boolean {
         if (_uiState.value.guardando) return false
+        ubicacionJob?.cancel()
         val datos = ProcesadorQr.interpretar(texto)
         _uiState.update { it.copy(actual = datos, fecha = datos?.let { System.currentTimeMillis() },
-            ubicacion = null, guardado = false,
-            mensaje = if (datos == null) "QR no válido." else "QR real leído desde CameraX. Puedes añadir ubicación antes de guardar.") }
+            ubicacion = null, guardado = false, obteniendoUbicacion = false,
+            mensaje = if (datos == null) "QR no válido." else "Sucursal identificada. Puedes añadir tu ubicación antes de guardar.") }
         return datos != null
     }
     /** Evita asociar coordenadas a otro escaneo si el usuario vuelve a abrir la cámara. */
@@ -66,7 +69,7 @@ class RegistrosQrViewModel(application: Application) : AndroidViewModel(applicat
         val s = _uiState.value
         if (s.actual == null || s.guardado || s.guardando || s.obteniendoUbicacion) return
         _uiState.update { it.copy(obteniendoUbicacion = true, mensaje = "Obteniendo ubicación…") }
-        viewModelScope.launch {
+        ubicacionJob = viewModelScope.launch {
             try {
                 val punto = obtenerUbicacionActual(getApplication())
                 registrarUbicacion(punto, s.fecha)
@@ -74,14 +77,16 @@ class RegistrosQrViewModel(application: Application) : AndroidViewModel(applicat
             } catch (e: Exception) {
                 if (_uiState.value.fecha == s.fecha)
                     informar(e.message ?: "No pudimos obtener tu ubicación. Puedes continuar sin coordenadas.")
-            } finally { _uiState.update { it.copy(obteniendoUbicacion = false) } }
+            } finally {
+                _uiState.update { if (it.fecha == s.fecha) it.copy(obteniendoUbicacion = false) else it }
+            }
         }
     }
 
     fun guardar() {
         val s = _uiState.value
         val datos = s.actual ?: return
-        if (s.guardando || s.guardado) return
+        if (s.guardando || s.guardado || s.obteniendoUbicacion) return
         _uiState.update { it.copy(guardando = true, mensaje = null) }
         viewModelScope.launch {
             try {
@@ -89,12 +94,12 @@ class RegistrosQrViewModel(application: Application) : AndroidViewModel(applicat
                 _uiState.update { actual ->
                     
                     if (actual.actual == datos && actual.fecha == s.fecha)
-                        actual.copy(guardado = true, mensaje = "Escaneo #$id guardado en SQLite.")
+                        actual.copy(guardado = true, mensaje = "Escaneo #$id guardado correctamente.")
                     else actual
                 }
             } catch (e: CancellationException) { throw e
             } catch (e: Exception) {
-                _uiState.update { it.copy(mensaje = "No se pudo guardar: ${e.message}") }
+                _uiState.update { it.copy(mensaje = "No se pudo guardar el registro. Intenta nuevamente.") }
             } finally { _uiState.update { it.copy(guardando = false) } }
         }
     }
@@ -135,6 +140,7 @@ class RegistrosQrViewModel(application: Application) : AndroidViewModel(applicat
         } else "No se encontró el registro QR."
     }
     fun limpiar() {
+        ubicacionJob?.cancel()
         _uiState.value = RegistrosQrUiState(guardando = _uiState.value.guardando)
         filtro.value = ""
     }
@@ -145,7 +151,7 @@ class RegistrosQrViewModel(application: Application) : AndroidViewModel(applicat
                 _uiState.update { it.copy(mensaje = mensaje) }
             }
             catch (e: CancellationException) { throw e }
-            catch (e: Exception) { _uiState.update { it.copy(mensaje = "No se pudo completar: ${e.message}") } }
+            catch (e: Exception) { _uiState.update { it.copy(mensaje = "No se pudo completar la operación. Intenta nuevamente.") } }
         }
     }
 }
