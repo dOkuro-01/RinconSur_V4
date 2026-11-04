@@ -1,6 +1,7 @@
 package cl.duoc.rinconsur.viewmodels
 
 import android.app.Application
+import cl.duoc.rinconsur.location.obtenerUbicacionActual
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import cl.duoc.rinconsur.repository.RegistrosQrRepository
@@ -19,6 +20,7 @@ data class RegistrosQrUiState(
     val ubicacion: Coordenadas? = null,
     val guardado: Boolean = false,
     val guardando: Boolean = false,
+    val obteniendoUbicacion: Boolean = false,
     val filtro: String = "",
     val editando: Long? = null,
     val seccion: String = "",
@@ -59,6 +61,22 @@ class RegistrosQrViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
     fun informar(mensaje: String) = _uiState.update { it.copy(mensaje = mensaje) }
+
+    fun solicitarUbicacion() {
+        val s = _uiState.value
+        if (s.actual == null || s.guardado || s.guardando || s.obteniendoUbicacion) return
+        _uiState.update { it.copy(obteniendoUbicacion = true, mensaje = "Obteniendo ubicación…") }
+        viewModelScope.launch {
+            try {
+                val punto = obtenerUbicacionActual(getApplication())
+                registrarUbicacion(punto, s.fecha)
+            } catch (e: CancellationException) { throw e
+            } catch (e: Exception) {
+                if (_uiState.value.fecha == s.fecha)
+                    informar(e.message ?: "No pudimos obtener tu ubicación. Puedes continuar sin coordenadas.")
+            } finally { _uiState.update { it.copy(obteniendoUbicacion = false) } }
+        }
+    }
 
     fun guardar() {
         val s = _uiState.value

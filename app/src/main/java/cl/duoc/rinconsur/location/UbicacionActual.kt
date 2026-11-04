@@ -7,49 +7,39 @@ import android.location.LocationManager
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
 import cl.duoc.rinconsur.repository.models.Coordenadas
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
 
-/**
- * Recurso nativo 2: LocationManager del propio Android (sin Google Play Services).
- * Hace una sola solicitud a NETWORK_PROVIDER con permiso aproximado.
- * El QR se puede guardar aunque no haya ubicación o permiso.
- */
-fun obtenerUbicacionActual(
-    contexto: Context,
-    alObtener: (Coordenadas) -> Unit,
-    alFallar: (String) -> Unit
-) {
+suspend fun obtenerUbicacionActual(contexto: Context): Coordenadas {
     if (ContextCompat.checkSelfPermission(contexto, Manifest.permission.ACCESS_COARSE_LOCATION) !=
         PackageManager.PERMISSION_GRANTED) {
-        alFallar("No hay permiso de ubicación aproximada. Puedes guardar sin coordenadas.")
-        return
+        throw IllegalStateException("Autoriza la ubicación para obtener coordenadas. Puedes continuar sin ellas.")
     }
     val servicio = contexto.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
-    if (servicio == null) {
-        alFallar("Servicio de ubicación no disponible. Puedes guardar sin coordenadas.")
-        return
+    if (servicio == null || !LocationManagerCompat.isLocationEnabled(servicio)) {
+        throw IllegalStateException("Activa la ubicación del teléfono o continúa sin coordenadas.")
     }
+    if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(contexto) != ConnectionResult.SUCCESS) {
+        throw IllegalStateException("El servicio de ubicación no está disponible. Puedes continuar sin coordenadas.")
+    }
+    val cliente = LocationServices.getFusedLocationProviderClient(contexto)
+    val cancelacion = CancellationTokenSource()
     try {
-        if (!servicio.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-            alFallar("Activa Ubicación en Android para obtener coordenadas aproximadas, o guarda sin ellas.")
-            return
-        }
-        // Se usa android.os.CancellationSignal de forma explícita.
-        // AndroidX también ofrece una sobrecarga con androidx.core.os.CancellationSignal:
-        // al pasar null sin tipo, Kotlin no puede elegir entre ambas.
-        val cancelacion = android.os.CancellationSignal()
-        @Suppress("MissingPermission")
-        LocationManagerCompat.getCurrentLocation(
-            servicio,
-            LocationManager.NETWORK_PROVIDER,
-            cancelacion,
-            ContextCompat.getMainExecutor(contexto)
-        ) { ubicacion: android.location.Location? ->
-            if (ubicacion != null) alObtener(Coordenadas(ubicacion.latitude, ubicacion.longitude))
-            else alFallar("No se pudo obtener ubicación. Puedes guardar sin coordenadas.")
-        }
-    } catch (_: SecurityException) {
-        alFallar("Permiso de ubicación denegado. Puedes guardar sin coordenadas.")
-    } catch (_: Exception) {
-        alFallar("No se pudo consultar la ubicación. Puedes guardar sin coordenadas.")
+        val resultado = withTimeoutOrNull(15_000L) {
+            cliente.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, cancelacion.token).await()
+        } ?: throw IllegalStateException("No pudimos obtener tu ubicación. Intenta nuevamente o continúa sin coordenadas.")
+        return Coordenadas(resultado.latitude, resultado.longitude)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: SecurityException) {
+        throw IllegalStateException("El permiso de ubicación fue retirado. Puedes continuar sin coordenadas.")
+    } finally {
+        cancelacion.cancel()
     }
 }

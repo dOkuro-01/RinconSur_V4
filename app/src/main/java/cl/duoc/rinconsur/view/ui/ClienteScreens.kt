@@ -3,6 +3,9 @@ package cl.duoc.rinconsur.view.ui
 import androidx.compose.foundation.layout.*
 import android.Manifest
 import android.content.pm.PackageManager
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -41,18 +44,13 @@ fun ClienteInicioScreen(vm: ProbadoresViewModel, formularios: FormulariosViewMod
     val formulario by formularios.uiState.collectAsState()
     val qrState by qrVm.uiState.collectAsState()
     val contexto = LocalContext.current
+    var permisoUbicacionDenegado by rememberSaveable { mutableStateOf(false) }
 
-    fun solicitarUbicacion() {
-        // Capturar la fecha de este QR evita guardar una ubicación tardía en otro QR.
-        val fechaQr = qrState.fecha
-        obtenerUbicacionActual(contexto,
-            alObtener = { qrVm.registrarUbicacion(it, fechaQr) },
-            alFallar = qrVm::informar)
-    }
     val solicitarPermisoUbicacion = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { autorizado ->
-        if (autorizado) solicitarUbicacion()
+        permisoUbicacionDenegado = !autorizado
+        if (autorizado) qrVm.solicitarUbicacion()
         else qrVm.informar("Ubicación denegada. Puedes guardar el QR sin coordenadas.")
     }
     val cabinas = estado.cabinasEn(vm.sucursal)
@@ -113,12 +111,16 @@ fun ClienteInicioScreen(vm: ProbadoresViewModel, formularios: FormulariosViewMod
                             String.format(Locale.US, "%.5f, %.5f", it.latitud, it.longitud)
                         } ?: "No registradas"}")
                         Etiqueta("La ubicación es opcional: se obtiene con permiso y se guarda solo si la autorizas.")
-                        Boton("Obtener ubicación actual (opcional)", {
+                        Boton(if (qrState.obteniendoUbicacion) "Obteniendo ubicación…" else "Obtener ubicación (opcional)", {
                             if (ContextCompat.checkSelfPermission(contexto,
                                     Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
-                                solicitarUbicacion()
+                                qrVm.solicitarUbicacion()
                             else solicitarPermisoUbicacion.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
-                        }, secundario = true, habilitado = !qrState.guardado && !qrState.guardando)
+                        }, secundario = true, habilitado = !qrState.guardado && !qrState.guardando && !qrState.obteniendoUbicacion)
+                        if (permisoUbicacionDenegado) TextButton(onClick = {
+                            contexto.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                Uri.parse("package:${contexto.packageName}")))
+                        }) { Text("Abrir ajustes de permisos") }
                         Boton(if (qrState.guardado) "QR guardado" else "Guardar escaneo en SQLite",
                             qrVm::guardar,
                             habilitado = !qrState.guardado && !qrState.guardando)

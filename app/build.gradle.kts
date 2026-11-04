@@ -13,8 +13,8 @@ android {
         applicationId = "cl.duoc.rinconsur"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "4.0-camerax-qr"
+        versionCode = 7
+        versionName = "4.1"
     }
     buildTypes { release { isMinifyEnabled = false } }
     compileOptions {
@@ -42,6 +42,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+    implementation("com.google.android.gms:play-services-location:21.1.0")
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
